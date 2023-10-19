@@ -24,19 +24,23 @@ class RealEstate(Base):
     is_active = Column(Boolean, default=True)
     published_in = Column(Date, nullable=False)
 
-    tipo_pagamento = relationship('TipoPagamento', back_populates='imovel')
+    sell_type_relationship = relationship(
+        'SellType',
+        back_populates='real_estate_relationship')
 
 
-class TipoPagamento(Base):
+class SellType(Base):
     __tablename__ = "tipo_pagamento"
 
     id = Column(Integer, primary_key=True, index=True)
-    codigo_imovel = Column(String, ForeignKey('imoveis.codigo_imovel'))
+    codigo_imovel = Column(String, ForeignKey('real_estate.real_estate_id'))
     financiamento = Column(Boolean, default=False)
     parcelamento = Column(Boolean, default=False)
     consorcio = Column(Boolean, default=False)
 
-    imovel = relationship('Imoveis', back_populates='tipo_pagamento')
+    real_estate_relationship = relationship(
+        'RealEstate',
+        back_populates='sell_type_relationship')
 
 
 # class User(Base):

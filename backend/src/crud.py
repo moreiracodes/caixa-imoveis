@@ -28,25 +28,26 @@ def input_cleaner(input: str, title=True):
     return input.lstrip().rstrip()
 
 
-def create_imovel(db: Session, imovel: list):
+def create_imovel(db: Session, imovel: list, published_in: str):
 
     if (not format_brl_to_usd(imovel[5])):
 
         imovel[4] = f'{input_cleaner(imovel[4])} {input_cleaner(imovel[5])}'
         imovel.pop(5)
 
-    db_imovel = models.Imoveis(
-        codigo_imovel=input_cleaner(imovel[0]),
-        uf=input_cleaner(imovel[1], False),
-        cidade=input_cleaner(imovel[2]),
-        bairro=input_cleaner(imovel[3]),
-        endereco=input_cleaner(imovel[4]),
-        preco_venda=format_brl_to_usd(input_cleaner(imovel[5], False)),
-        preco_avaliacao=format_brl_to_usd(input_cleaner(imovel[6], False)),
-        desconto=float(input_cleaner(imovel[7], False)),
-        descricao=input_cleaner(imovel[8], False),
-        modalidade_venda=input_cleaner(imovel[9], False),
-        link=input_cleaner(imovel[10], False)
+    db_imovel = models.RealEstate(
+        real_estate_id=input_cleaner(imovel[0]),
+        federation_id=input_cleaner(imovel[1], False),
+        city=input_cleaner(imovel[2]),
+        neighbor=input_cleaner(imovel[3]),
+        address=input_cleaner(imovel[4]),
+        sell_price=format_brl_to_usd(input_cleaner(imovel[5], False)),
+        evaluation_price=format_brl_to_usd(input_cleaner(imovel[6], False)),
+        discount=float(input_cleaner(imovel[7], False)),
+        description=input_cleaner(imovel[8], False),
+        sell_type=input_cleaner(imovel[9], False),
+        link=input_cleaner(imovel[10], False),
+        published_in=published_in
     )
 
     db.add(db_imovel)
@@ -55,6 +56,14 @@ def create_imovel(db: Session, imovel: list):
     return db_imovel
 
 
+def get_last_publish_date(db: Session):
+    row = db.query(models.RealEstate).\
+        order_by(models.RealEstate.published_in).first()
+
+    if (row is None):
+        return False
+
+    return row.published_in
 # def get_user(db: Session, user_id: int):
 #     return db.query(models.User).filter(models.User.id == user_id).first()
 

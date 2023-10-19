@@ -19,6 +19,14 @@ class CSVFile:
     def date_created(self):
         return self.__date_created
 
+    def get_formated_date(self):
+        date = self.date_created.split('/')
+        day = date[0]
+        month = date[1]
+        year = date[2]
+
+        return f'{year}-{month}-{day}'
+
     def download(self):
 
         user_agent = 'Mozilla/5.0 \
