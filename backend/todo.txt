@@ -1,0 +1,6 @@
+O que a API precisa fazer? 
+
+1. Verificar se os dados estão atualizados, caso não esteja, baixar as atualizações.
+2. Ler os arquivos baixados e gravar no banco de dados
+3. Fornecer lista de imóveis correspondente aos termos de busca.
+4. Fornecer informações detalhadas de um imóvel.

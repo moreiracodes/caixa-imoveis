@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  api:
+    build: 
+      dockerfile: ./backend/dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+    
+  db:
+    image: postgres:latest
+    env_file:
+      - .env
+    # volumes:
+    #   - ./data:/var/lib/postgresql/data
+

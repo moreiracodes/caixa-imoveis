@@ -1,0 +1,24 @@
+FROM python:3.12.0-alpine3.18
+
+WORKDIR /app
+
+RUN pip install --upgrade pip
+
+RUN pip install fastapi \
+    uvicorn \
+    psycopg2-binary \
+    sqlalchemy \
+    requests \
+    alembic
+
+COPY . /app/
+
+EXPOSE 8000
+
+# RUN ["alembic", "init", "alembic"]
+
+# RUN ["alembic", "revision", "--autogenerate", "-m", "New Migration"]
+    
+# RUN ["alembic", "upgrade", "head"]
+
+CMD ["uvicorn", "src.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
