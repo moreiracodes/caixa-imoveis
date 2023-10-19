@@ -1,65 +1,50 @@
+'''
+    models.py defines database table models
+'''
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Numeric, Date
 from sqlalchemy.orm import relationship
 
 from .database import Base
 
 
-class RealEstate(Base):
-    __tablename__ = "real_estate"
+class Imovel(Base):
+    ''' RealEstate set basic fields to each property/real estate/land '''
 
-    real_estate_id = Column(String(30),
-                            primary_key=True,
-                            unique=True,
-                            index=True)
-    federation_id = Column(String(2), nullable=False)
-    city = Column(String(50), nullable=False)
-    neighbor = Column(String(50), nullable=False)
-    address = Column(String(200), nullable=False)
-    sell_price = Column(Numeric(10, 2), nullable=False)
-    evaluation_price = Column(Numeric(10, 2), nullable=False)
-    discount = Column(Numeric(10, 2), nullable=False)
-    description = Column(String(200), nullable=False)
-    sell_type = Column(String(50), nullable=False)
+    __tablename__ = "imovel"
+
+    imovel_id = Column(String(30),
+                       primary_key=True,
+                       unique=True,
+                       index=True)
+    uf = Column(String(2), nullable=False)
+    cidade = Column(String(50), nullable=False)
+    bairro = Column(String(50), nullable=False)
+    endereco = Column(String(200), nullable=False)
+    preco_venda = Column(Numeric(10, 2), nullable=False)
+    preco_avaliacao = Column(Numeric(10, 2), nullable=False)
+    desconto = Column(Numeric(10, 2), nullable=False)
+    descricao = Column(String(200), nullable=False)
+    modalidade_venda = Column(String(50), nullable=False)
     link = Column(String(150), nullable=False)
-    is_active = Column(Boolean, default=True)
-    published_in = Column(Date, nullable=False)
+    ativo = Column(Boolean, default=True)
+    publicado_em = Column(Date, nullable=False)
 
-    sell_type_relationship = relationship(
-        'SellType',
-        back_populates='real_estate_relationship')
+    # Define a relationship between real_estate and sell_type
+    tipo_venda_relacionamento = relationship(
+        'TipoVenda',
+        back_populates='imovel_relacionamento')
 
 
-class SellType(Base):
-    __tablename__ = "tipo_pagamento"
+class TipoVenda(Base):
+    __tablename__ = "tipo_venda"
 
     id = Column(Integer, primary_key=True, index=True)
-    codigo_imovel = Column(String, ForeignKey('real_estate.real_estate_id'))
+    imovel_id = Column(String, ForeignKey('imovel.imovel_id'))
     financiamento = Column(Boolean, default=False)
     parcelamento = Column(Boolean, default=False)
     consorcio = Column(Boolean, default=False)
 
-    real_estate_relationship = relationship(
-        'RealEstate',
-        back_populates='sell_type_relationship')
-
-
-# class User(Base):
-#     __tablename__ = "users"
-
-#     id = Column(Integer, primary_key=True, index=True)
-#     email = Column(String, unique=True, index=True)
-#     hashed_password = Column(String)
-#     is_active = Column(Boolean, default=True)
-
-#     items = relationship("Item", back_populates="owner")
-
-
-# class Item(Base):
-#     __tablename__ = "items"
-
-#     id = Column(Integer, primary_key=True, index=True)
-#     title = Column(String, index=True)
-#     description = Column(String, index=True)
-#     owner_id = Column(Integer, ForeignKey("users.id"))
-
-#     owner = relationship("User", back_populates="items")
+    # Define a relationship between sell_type and real_estate 
+    imovel_relacionamento = relationship(
+        'Imovel',
+        back_populates='tipo_venda_relacionamento')

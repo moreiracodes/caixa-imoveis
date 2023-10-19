@@ -6,6 +6,7 @@ from .database import SessionLocal, engine
 from .CSVFile import CSVFile
 from datetime import datetime, date
 
+# starts Base and create db tables
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -27,14 +28,17 @@ def CreateImovel(db: Session = Depends(get_db)):
     file_published = f.get_formated_date().split('-')
 
     try:
+        # convert str in array in date type to that can be compared later
         date_file = date(year=int(file_published[0]),
                          month=int(file_published[1]),
                          day=int(file_published[2]))
     except Exception as e:
-        print(f'Vixeeeee: {e}')
+        print(f'Erro de conversão da data de publição do csv: {e}')
 
     last_update = crud.get_last_publish_date(db=db)
-    if (last_update is not False and date_file <= last_update):
+    
+    # check if there is new file to be insert  
+    if ((last_update is not False) and (date_file <= last_update)):
 
         return {
             'message': 'Os imóveis estão atualizados',

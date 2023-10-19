@@ -1,8 +1,16 @@
+'''
+    Keeps CRUD operations and utils
+'''
+
 from sqlalchemy.orm import Session
 from . import models, schemas
 
 
 def format_brl_to_usd(brl: str):
+    '''
+        Receive a BRL format money string (R$ 3.000.123,32)
+        and return a float type in USD format (U$ 3000123.32 )
+    '''
     try:
         brl = list(brl)
 
@@ -23,31 +31,41 @@ def format_brl_to_usd(brl: str):
 
 
 def input_cleaner(input: str, title=True):
+    '''
+        Remove space character before and after content
+        and capitalize the first letter of each word
+    '''
     if (title):
         return input.lstrip().rstrip().title()
     return input.lstrip().rstrip()
 
 
-def create_imovel(db: Session, imovel: list, published_in: str):
-
+def create_imovel(db: Session, imovel: list, publicado_em: str):
+    '''
+        Receive imovel array and publicado_em and execute a insert query
+    '''
     if (not format_brl_to_usd(imovel[5])):
+
+        # some csv rows have an addition field for address complement
+        # so this field is added to previus and general field address
+        # and deleted
 
         imovel[4] = f'{input_cleaner(imovel[4])} {input_cleaner(imovel[5])}'
         imovel.pop(5)
 
-    db_imovel = models.RealEstate(
-        real_estate_id=input_cleaner(imovel[0]),
-        federation_id=input_cleaner(imovel[1], False),
-        city=input_cleaner(imovel[2]),
-        neighbor=input_cleaner(imovel[3]),
-        address=input_cleaner(imovel[4]),
-        sell_price=format_brl_to_usd(input_cleaner(imovel[5], False)),
-        evaluation_price=format_brl_to_usd(input_cleaner(imovel[6], False)),
-        discount=float(input_cleaner(imovel[7], False)),
-        description=input_cleaner(imovel[8], False),
-        sell_type=input_cleaner(imovel[9], False),
+    db_imovel = models.Imovel(
+        imovel_id=input_cleaner(imovel[0]),
+        uf=input_cleaner(imovel[1], False),
+        cidade=input_cleaner(imovel[2]),
+        bairro=input_cleaner(imovel[3]),
+        endereco=input_cleaner(imovel[4]),
+        preco_venda=format_brl_to_usd(input_cleaner(imovel[5], False)),
+        preco_avaliacao=format_brl_to_usd(input_cleaner(imovel[6], False)),
+        desconto=float(input_cleaner(imovel[7], False)),
+        descricao=input_cleaner(imovel[8], False),
+        modalidade_venda=input_cleaner(imovel[9], False),
         link=input_cleaner(imovel[10], False),
-        published_in=published_in
+        publicado_em=publicado_em
     )
 
     db.add(db_imovel)
@@ -57,33 +75,17 @@ def create_imovel(db: Session, imovel: list, published_in: str):
 
 
 def get_last_publish_date(db: Session):
-    row = db.query(models.RealEstate).\
-        order_by(models.RealEstate.published_in).first()
+    row = db.query(models.Imovel).\
+        order_by(models.Imovel.publicado_em).first()
 
     if (row is None):
         return False
 
-    return row.published_in
-# def get_user(db: Session, user_id: int):
-#     return db.query(models.User).filter(models.User.id == user_id).first()
-
-
-# def get_user_by_email(db: Session, email: str):
-#     return db.query(models.User).filter(models.User.email == email).first()
+    return row.publicado_em
 
 
 # def get_users(db: Session, skip: int = 0, limit: int = 100):
 #     return db.query(models.User).offset(skip).limit(limit).all()
-
-
-# def create_user(db: Session, user: schemas.UserCreate):
-#     fake_hashed_password = user.password + "notreallyhashed"
-#     db_user = models.User(email=user.email, hashed_password=fake_hashed_password)
-#     db.add(db_user)
-#     db.commit()
-#     db.refresh(db_user)
-#     return db_user
-
 
 # def get_items(db: Session, skip: int = 0, limit: int = 100):
 #     return db.query(models.Item).offset(skip).limit(limit).all()
