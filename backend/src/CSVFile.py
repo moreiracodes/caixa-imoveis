@@ -35,7 +35,7 @@ class CSVFile:
 
         headers = {
             'User-Agent': user_agent,
-                }
+        }
 
         with requests.Session() as s:
             download = s.get(self.__url, headers=headers)

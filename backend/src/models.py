@@ -1,16 +1,15 @@
 '''
     models.py defines database table models
 '''
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Numeric, Date
-from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, String, Numeric, Date
 
 from .database import Base
 
 
-class Imovel(Base):
+class Imoveis(Base):
     ''' RealEstate set basic fields to each property/real estate/land '''
 
-    __tablename__ = "imovel"
+    __tablename__ = "imoveis"
 
     imovel_id = Column(String(30),
                        primary_key=True,
@@ -28,23 +27,3 @@ class Imovel(Base):
     link = Column(String(150), nullable=False)
     ativo = Column(Boolean, default=True)
     publicado_em = Column(Date, nullable=False)
-
-    # Define a relationship between real_estate and sell_type
-    tipo_venda_relacionamento = relationship(
-        'TipoVenda',
-        back_populates='imovel_relacionamento')
-
-
-class TipoVenda(Base):
-    __tablename__ = "tipo_venda"
-
-    id = Column(Integer, primary_key=True, index=True)
-    imovel_id = Column(String, ForeignKey('imovel.imovel_id'))
-    financiamento = Column(Boolean, default=False)
-    parcelamento = Column(Boolean, default=False)
-    consorcio = Column(Boolean, default=False)
-
-    # Define a relationship between sell_type and real_estate 
-    imovel_relacionamento = relationship(
-        'Imovel',
-        back_populates='tipo_venda_relacionamento')

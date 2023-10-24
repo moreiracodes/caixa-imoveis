@@ -9,7 +9,7 @@ RUN pip install fastapi \
     psycopg2-binary \
     sqlalchemy \
     requests \
-    alembic
+    bs4
 
 COPY . /app/
 

@@ -18,6 +18,7 @@ class ImovelBase(BaseModel):
 
 
 class Imovel(ImovelBase):
+    imovel_id: str
 
     class Config:
         orm_mode = True
@@ -25,6 +26,18 @@ class Imovel(ImovelBase):
 
 class ImovelCreate(ImovelBase):
     pass
+
+
+class ObservacoesBase(BaseModel):
+
+    imovel_id: str
+    imagem: str
+    edital: str
+    matricula: str
+    observacoes: list
+
+    class Config:
+        orm_mode = True
 
 # class ItemBase(BaseModel):
 #     title: str

@@ -4,3 +4,7 @@ O que a API precisa fazer?
 2. Ler os arquivos baixados e gravar no banco de dados
 3. Fornecer lista de imóveis correspondente aos termos de busca.
 4. Fornecer informações detalhadas de um imóvel.
+
+# MATRICULA DO IMOVEL
+https://venda-imoveis.caixa.gov.br/editais/matricula/SP/<imovel_id>.pdf
+
