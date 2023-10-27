@@ -53,25 +53,6 @@ def get_db():
 #         raise HTTPException(status_code=400, detail="Email already registered")
 #     return crud.create_user(db=db, user=user)
 
-
-@app.get("/verificar-atualizacoes/", response_model=schemas.Imovel)
-def check_updates(imovel: schemas.ImovelCreate, db: Session = Depends(get_db)):
-
-    f = CSVFile()
-    data = f.download()
-    qtde_imoveis_cadastrados = []
-    for row in data:
-        qtde_imoveis_cadastrados.append(crud.create_imovel(db=db, imovel=row))
-
-    # se a data do arquivo vindo da CEF é maior que a data dos imóveis salvos
-    # no banco marcar como inativo os imóveis no banco e gravar os novos
-    # imóveis.
-
-    # senão, não faça nada
-
-    return qtde_imoveis_cadastrados
-
-
 @app.get("/")
 async def root():
     return {

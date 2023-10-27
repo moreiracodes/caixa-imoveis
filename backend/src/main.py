@@ -1,11 +1,10 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
-
+from typing import Union
 from . import crud, models, schemas
 from .database import SessionLocal, engine
 from .CSVFile import CSVFile
 from datetime import datetime, date
-from .spider import Spider
 from . import utils
 
 # starts Base and create db tables
@@ -78,44 +77,46 @@ def CreateImovel(db: Session = Depends(get_db)):
 
 @app.get("/imovel-detalhes/{imovel_id}")
 def imovel(imovel_id: str, db: Session = Depends(get_db)):
-    return crud.get_imovel(db=db, imovel_id=imovel_id)
+    return crud.get_imovel_detalhes(db=db, imovel_id=imovel_id)
 
 
 @app.get("/imovel-complemento/{imovel_id}")
 def observacoes(imovel_id: str):
-    imovel_id = utils.input_cleaner(imovel_id, title=False)
-    try:
-        url = 'https://venda-imoveis.caixa.gov.br/' + \
-            'sistema/detalhe-imovel.asp?' + \
-            'hdnOrigem=index&hdnimovel=' + \
-            imovel_id
-
-        spider = Spider(url)
-
-        if spider is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Não foi possível recuperar detalhes do imóvel"
-            )
-
-        return {
-            'imovel_id': imovel_id,
-            'imagem': spider.get_imagem(),
-            'edital': spider.get_edital(),
-            'matricula': spider.get_matricula(),
-            'observacoes': spider.get_observacoes()
-        }
-
-    except Exception as e:
-        print(f'Erro ao fazer web scrapping dos detalhes \
-            do imóvel {imovel_id}: {e}')
+    return utils.get_imovel_complemento(imovel_id)
 
 
-@app.get("/")
-def data():
-    f = CSVFile()
-    data = f.download()
-    return {
-        'date_created': f.date_created,
-        'data': data
+@app.get("/imoveis/",)
+def read_imoveis(
+    imovel_id: Union[str, None] = None,
+    uf: Union[str, None] = None,
+    cidade: Union[str, None] = None,
+    bairro: Union[str, None] = None,
+    endereco: Union[str, None] = None,
+    preco_venda_min: Union[float, None] = None,
+    preco_venda_max: Union[float, None] = None,
+    preco_avaliacao_min: Union[float, None] = None,
+    preco_avaliacao_max: Union[float, None] = None,
+    desconto_min: Union[float, None] = None,
+    desconto_max: Union[float, None] = None,
+    descricao: Union[str, None] = None,
+    modalidade_venda: Union[str, None] = None,
+    db: Session = Depends(get_db),
+):
+
+    termos_de_busca = {
+        'imovel_id': imovel_id,
+        'uf': uf,
+        'cidade': cidade,
+        'bairro': bairro,
+        'endereco': endereco,
+        'preco_venda_min': preco_venda_min,
+        'preco_venda_max': preco_venda_max,
+        'preco_avaliacao_min': preco_avaliacao_min,
+        'preco_avaliacao_max': preco_avaliacao_max,
+        'desconto_min': desconto_min,
+        'desconto_max': desconto_max,
+        'descricao': descricao,
+        'modalidade_venda': modalidade_venda
     }
+    print(termos_de_busca)
+    return crud.get_imoveis(termos_de_busca, db=db)

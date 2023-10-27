@@ -3,6 +3,7 @@
 '''
 
 
+from sqlalchemy import and_, or_, not_
 from sqlalchemy.orm import Session
 from . import models, schemas, utils
 
@@ -59,7 +60,7 @@ def get_last_publish_date(db: Session):
     return row.publicado_em
 
 
-def get_imovel(db: Session, imovel_id: str):
+def get_imovel_detalhes(db: Session, imovel_id: str):
     row = db.query(models.Imoveis).where(
         models.Imoveis.imovel_id == imovel_id).first()
 
@@ -67,3 +68,23 @@ def get_imovel(db: Session, imovel_id: str):
         return False
 
     return row
+
+
+def get_imoveis(termos_de_busca: list, db: Session):
+    search_args = []
+
+    for attr in termos_de_busca:
+        if termos_de_busca[attr] is not None:
+
+            termos_fracionados = termos_de_busca[attr].split(' ')
+            for termos in termos_fracionados:
+                search_args.append(getattr(
+                    models.Imoveis, attr).ilike(f'%{termos}%'))
+
+    result = db.query(models.Imoveis
+                      ).filter(and_(*search_args)).all()
+
+    if (result is None):
+        return False
+
+    return result

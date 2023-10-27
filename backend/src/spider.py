@@ -10,8 +10,13 @@ from bs4 import BeautifulSoup
 
 
 class Spider:
-    def __init__(self, url):
-        self.url = url
+    def __init__(self, imovel_id):
+        self.imovel_id = imovel_id
+
+        self.__url = 'https://venda-imoveis.caixa.gov.br/' + \
+            'sistema/detalhe-imovel.asp?' + \
+            'hdnOrigem=index&hdnimovel=' + \
+            self.imovel_id
 
         user_agent = 'Mozilla/5.0 \
             (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7)' + \
@@ -24,13 +29,22 @@ class Spider:
         self.__headers = headers
         try:
             with requests.Session() as s:
-                download = s.get(self.url, headers=self.__headers)
+                download = s.get(self.__url, headers=self.__headers)
                 decoded_content = download.content.decode('UTF-8')
 
             self.__soup = BeautifulSoup(decoded_content, 'html.parser')
 
         except Exception as e:
             print(f'Erro ao raspar dados: {e}')
+
+    def run(self):
+        return {
+            'imovel_id': self.imovel_id,
+            'imagem': self.get_imagem(),
+            'edital': self.get_edital(),
+            'matricula': self.get_matricula(),
+            'observacoes': self.get_observacoes()
+        }
 
     def get_observacoes(self):
         '''
