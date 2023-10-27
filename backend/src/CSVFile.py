@@ -3,9 +3,9 @@ import requests
 
 
 class CSVFile:
-    def __init__(self):
+    def __init__(self, uf):
 
-        self.__uf = 'SP'
+        self.__uf = uf
 
         domain = 'https://venda-imoveis.caixa.gov.br/listaweb/'
         file_name = f'Lista_imoveis_{self.__uf}.csv'

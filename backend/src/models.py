@@ -1,5 +1,5 @@
 '''
-    models.py defines database table models
+    models.py defines database model models
 '''
 from sqlalchemy import Boolean, Column, String, Numeric, Date
 
@@ -19,9 +19,12 @@ class Imoveis(Base):
     cidade = Column(String(50), nullable=False)
     bairro = Column(String(50), nullable=False)
     endereco = Column(String(200), nullable=False)
-    preco_venda = Column(Numeric(10, 2), nullable=False)
-    preco_avaliacao = Column(Numeric(10, 2), nullable=False)
-    desconto = Column(Numeric(10, 2), nullable=False)
+    preco_venda = Column(Numeric, nullable=False)
+    preco_avaliacao = Column(Numeric, nullable=False)
+    desconto = Column(Numeric, nullable=False)
+    # preco_venda = Column(Numeric(10, 2), nullable=False)
+    # preco_avaliacao = Column(Numeric(10, 2), nullable=False)
+    # desconto = Column(Numeric(10, 2), nullable=False)
     descricao = Column(String(200), nullable=False)
     modalidade_venda = Column(String(50), nullable=False)
     link = Column(String(150), nullable=False)

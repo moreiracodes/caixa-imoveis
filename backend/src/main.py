@@ -7,7 +7,7 @@ from .CSVFile import CSVFile
 from datetime import datetime, date
 from . import utils
 
-# starts Base and create db tables
+# starts Base and create db models
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -24,55 +24,67 @@ def get_db():
 
 @app.get("/data")
 def CreateImovel(db: Session = Depends(get_db)):
-    f = CSVFile()
-    data = f.download()
-    file_published = f.get_formated_date().split('-')
 
-    try:
-        # convert str in array in date type to that can be compared later
-        date_file = date(year=int(file_published[0]),
-                         month=int(file_published[1]),
-                         day=int(file_published[2]))
-    except Exception as e:
-        print(f'Erro de conversão da data de publição do csv: {e}')
+    uf_list = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 
+               'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
+               'MG', 'PA', 'PB', 'PR', 'PE', 'PI',
+               'RJ', 'RN', 'RS', 'RO', 'RR', 'SC',
+               'SP', 'SE', 'TO']
+    message = []
+    inicio = datetime.now()
+    imoveis_cadastrados_por_uf = []
+    for uf in uf_list:
 
-    last_update = crud.get_last_publish_date(db=db)
+        f = CSVFile(uf)
+        data = f.download()
+        file_published = f.get_formated_date().split('-')
+        try:
+            # convert str in array in date type to that can be compared later
+            date_file = date(year=int(file_published[0]),
+                            month=int(file_published[1]),
+                                day=int(file_published[2]))
+        except Exception as e:
+            print(f'Erro de conversão da data de publição do csv de {uf}: {e}')
 
-    # check if there is new file to be insert
-    if ((last_update is not False) and (date_file <= last_update)):
+        last_update = crud.get_last_publish_date(uf, db=db)
 
-        return {
-            'message': 'Os imóveis estão atualizados',
-        }
+        # check if there is new file to be insert
+        if ((last_update is not False) and (date_file <= last_update)):
 
-    else:
-        inicio = datetime.now()
-        qtde = []
-        for row in data:
-            try:
+             message.append(f'Os imóveis de {uf} já estão atualizados')
+
+        else:
+            imoveis_cadastrados = []
+            for row in data:
+                
                 imovel_id = utils.input_cleaner(row[0], title=False)
+               
+                try:
+                
+                    imovel_inserido_obj = crud.create_imovel(
+                        db=db,
+                        imovel=row,
+                        publicado_em=f.get_formated_date()
+                    )
 
-                imovel_inserido_obj = crud.create_imovel(
-                    db=db,
-                    imovel=row,
-                    publicado_em=f.get_formated_date()
-                )
+                    imoveis_cadastrados.append(imovel_inserido_obj)
 
-                qtde.append(imovel_inserido_obj)
-
-            except Exception as e:
-                print(f'Erro ao inserir imóvel {imovel_id}: {e}')
-
-            # finally:
-
-        fim = datetime.now()
-        return {
-            'published in': f.get_formated_date(),
-            'message': f'Foram cadastrados {len(qtde)} imóveis',
-            'inicio': inicio,
-            'fim': fim,
-            'tempo-processamento': (fim - inicio).total_seconds()
-        }
+                except Exception as e:
+                    print(f'Erro ao inserir imóvel {imovel_id}: {e}')
+                finally:
+                    del(imovel_id)
+            imoveis_cadastrados_por_uf.append(len(imoveis_cadastrados))
+            message.append(f'Foram cadastrados {len(imoveis_cadastrados)} imóveis de {uf}')
+    
+    fim = datetime.now()
+    return {
+        'published in': f.get_formated_date(),
+        'message': message,
+        'total_novos_imoveis': '',  
+        'inicio': inicio,
+        'fim': fim,
+        'tempo-processamento': (fim - inicio).total_seconds()
+    }
 
 
 @app.get("/imovel-detalhes/{imovel_id}")
@@ -100,6 +112,7 @@ def read_imoveis(
     desconto_max: Union[float, None] = None,
     descricao: Union[str, None] = None,
     modalidade_venda: Union[str, None] = None,
+    order_by: Union[int, None] = 0,
     db: Session = Depends(get_db),
 ):
 
@@ -116,7 +129,7 @@ def read_imoveis(
         'desconto_min': desconto_min,
         'desconto_max': desconto_max,
         'descricao': descricao,
-        'modalidade_venda': modalidade_venda
+        'modalidade_venda': modalidade_venda,
     }
-    print(termos_de_busca)
-    return crud.get_imoveis(termos_de_busca, db=db)
+    
+    return crud.get_imoveis(termos_de_busca, order_by, db=db)

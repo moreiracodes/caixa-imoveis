@@ -11,22 +11,37 @@ def format_brl_to_usd(brl: str):
         Receive a BRL format money string (R$ 3.000.123,32)
         and return a float type in USD format (U$ 3000123.32 )
     '''
+
+    
     try:
-        brl = list(brl)
+        brl = brl.replace('.', '')
+        brl = brl.replace(',', '.')
 
-        while ('.' in brl):
-            brl.remove(".")
 
-        brl[brl.index(",")] = "."
-        result = ''
-        for i in brl:
-            result = result + i
+        usd = float(brl)
 
-        usd = float(result)
+        # ################3
+        # brl = list(brl)
+
+        # if '.' in brl:
+        #     while ('.' in brl):
+        #         brl.remove(".")
+
+        # if ',' in brl:
+        #     brl[brl.index(",")] = "."
+        
+        # result = ''
+
+        # for i in brl:
+        #     result = result + i
+
+        # print (f'Antes: {result}')
+        # usd = float(result)
 
         return usd
 
-    except Exception:
+    except Exception as e:
+        
         return False
 
 

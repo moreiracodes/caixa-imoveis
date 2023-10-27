@@ -14,7 +14,7 @@ def create_imovel(db: Session,
     '''
         Receive imovel array and publicado_em and execute a insert query
     '''
-    if (not utils.format_brl_to_usd(imovel[5])):
+    while (not utils.format_brl_to_usd(imovel[5])):
 
         # some csv rows have an addition field for address complement
         # so this field is added to previus and general field address
@@ -24,6 +24,7 @@ def create_imovel(db: Session,
             {utils.input_cleaner(imovel[5])}'
         imovel.pop(5)
 
+    
     imovel_id = utils.input_cleaner(imovel[0])
 
     db_imovel = models.Imoveis(
@@ -50,9 +51,12 @@ def create_imovel(db: Session,
     return db_imovel
 
 
-def get_last_publish_date(db: Session):
-    row = db.query(models.Imoveis).\
-        order_by(models.Imoveis.publicado_em).first()
+def get_last_publish_date(uf: str, db: Session):
+    model_imovel = models.Imoveis
+
+    row = db.query(model_imovel).filter(and_(
+        model_imovel.uf == uf)).order_by(
+            model_imovel.publicado_em).first()
 
     if (row is None):
         return False
@@ -70,21 +74,51 @@ def get_imovel_detalhes(db: Session, imovel_id: str):
     return row
 
 
-def get_imoveis(termos_de_busca: list, db: Session):
+def get_imoveis(termos_de_busca: list, order_by:int, db: Session):
+    
+    model_imoveis = models.Imoveis
+
+    order_by_opt = [
+        model_imoveis.preco_venda.asc(),
+        model_imoveis.preco_venda.desc(),
+        model_imoveis.preco_avaliacao.asc(),
+        model_imoveis.preco_avaliacao.desc(),
+        model_imoveis.desconto.asc(),
+        model_imoveis.desconto.desc(),
+        model_imoveis.cidade.asc(),
+        model_imoveis.cidade.desc(),
+        model_imoveis.bairro.asc(),
+        model_imoveis.bairro.desc(),
+        model_imoveis.uf.asc(),
+        model_imoveis.uf.desc(),
+    ]
     search_args = []
 
     for attr in termos_de_busca:
+            
         if termos_de_busca[attr] is not None:
 
-            termos_fracionados = termos_de_busca[attr].split(' ')
-            for termos in termos_fracionados:
-                search_args.append(getattr(
-                    models.Imoveis, attr).ilike(f'%{termos}%'))
+            if (type(termos_de_busca[attr]) is float):
 
-    result = db.query(models.Imoveis
-                      ).filter(and_(*search_args)).all()
+                if('_min' in attr):
+                    substring_end = attr.rfind("_")
+                    search_args.append(getattr(
+                            model_imoveis, attr[0:substring_end]) >= termos_de_busca[attr])
+                if('_max' in attr):
+                    substring_end = attr.rfind("_")
+                    search_args.append(getattr(
+                            model_imoveis, attr[0:substring_end]) <= termos_de_busca[attr])
+            else:
+                termos_fracionados = termos_de_busca[attr].split(' ')
+                for termos in termos_fracionados:
+                    search_args.append(getattr(
+                        model_imoveis, attr).ilike(f'%{termos}%'))
+
+    result = db.query(model_imoveis
+                      ).filter(and_(*search_args)).order_by(order_by_opt[order_by]).all()
 
     if (result is None):
         return False
 
     return result
+
