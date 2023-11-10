@@ -1,6 +1,16 @@
+'''
+    CSVFile.py
+
+    Este modulo serve para baixar um arquivo csv com informações de imóvei a venda 
+    em diferentes modalidades do site https://venda-imoveis.caixa.gov.br/
+
+    Autor: moreiracondes <moreiracodes@proton.me>
+'''
+
+
 import csv
 import requests
-
+from datetime import date, datetime
 
 class CSVFile:
     def __init__(self, uf):
@@ -19,13 +29,20 @@ class CSVFile:
     def date_created(self):
         return self.__date_created
 
-    def get_formated_date(self):
-        date = self.date_created.split('/')
-        day = date[0]
-        month = date[1]
-        year = date[2]
+    def get_data_formatada(self):
+        '''
+            Converte a data string para datatype
+        '''
+        try:
 
-        return f'{year}-{month}-{day}'
+            data_lista = self.date_created.split('/')
+            data_objeto = date(int(data_lista[2]), int(data_lista[1]), int(data_lista[0]))
+            
+            return data_objeto
+
+        except Exception as e:
+            print(f'Erro de conversão da data de publição do csv de {self.__uf}: {e}')
+
 
     def download(self):
 

@@ -1,11 +1,16 @@
 '''
-    Keeps CRUD operations and utils
+    crud.py 
+
+    Esse módulo contém as operações de CRU
+    
+    Autor: moreiracondes <moreiracodes@proton.me>
 '''
 
 
 from sqlalchemy import and_, or_, not_
 from sqlalchemy.orm import Session
 from . import models, schemas, utils
+from datetime import date
 
 
 def create_imovel(db: Session,
@@ -121,4 +126,31 @@ def get_imoveis(termos_de_busca: list, order_by:int, db: Session):
         return False
 
     return result
+
+
+def arquivamento_de_imoveis(imovel_antigos_mantidos: list, db: Session):
+
+    model_imovel = models.Imoveis
+
+    search_args = [model_imovel.ativo is True]
+
+    for imovel_antigo_id in imovel_antigos_mantidos:
+
+        # Se o imóvel estiver na lista dos matidos ele não deve ser arquivado
+        search_args.append(model_imovel.imovel_id(not_(imovel_antigo_id)))
+
+        # Senão ele deve ser arquivado
+
+    row = db.query(model_imovel).filter(or_(
+        *search_args)).update({
+            model_imovel.ativo: False
+        })
+
+
+    if (row is None):
+        return False
+
+    return row
+    
+
 

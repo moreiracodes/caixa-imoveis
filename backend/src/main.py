@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, status, HTTPException
 from sqlalchemy.orm import Session
 from typing import Union
 from . import crud, models, schemas
@@ -21,9 +21,9 @@ def get_db():
     finally:
         db.close()
 
-
-@app.get("/data")
-def CreateImovel(db: Session = Depends(get_db)):
+# Atualiza os imóveis cadastrados
+@app.get("/verifica-atualizacoes")
+def verifica_atualizacoes(db: Session = Depends(get_db)):
 
     uf_list = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 
                'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
@@ -31,74 +31,109 @@ def CreateImovel(db: Session = Depends(get_db)):
                'RJ', 'RN', 'RS', 'RO', 'RR', 'SC',
                'SP', 'SE', 'TO']
     message = []
-    inicio = datetime.now()
-    imoveis_cadastrados_por_uf = []
-    for uf in uf_list:
+   
+    # armazena a quantidade total de imóveis inseridos 
+    contador = 0
 
+    inicio = datetime.now()
+
+    # Percorre a lista de estados (UF)
+    for uf in uf_list:
+        
+        # armazena a quantidade de imóveis cadastrados por estado
+        imoveis_cadastrados = []
+
+        # Faz o download do arquivo csv da respectiva uf  
         f = CSVFile(uf)
-        data = f.download()
-        file_published = f.get_formated_date().split('-')
-        try:
-            # convert str in array in date type to that can be compared later
-            date_file = date(year=int(file_published[0]),
-                            month=int(file_published[1]),
-                                day=int(file_published[2]))
-        except Exception as e:
-            print(f'Erro de conversão da data de publição do csv de {uf}: {e}')
+
+        dados_csv = f.download()
+        data_csv = f.get_data_formatada()
+
 
         last_update = crud.get_last_publish_date(uf, db=db)
 
-        # check if there is new file to be insert
-        if ((last_update is not False) and (date_file <= last_update)):
+        # Se a data do arquivo for anterior a data da ultima inserção
+        if ((last_update is not False) and (data_csv <= last_update)):
 
-             message.append(f'Os imóveis de {uf} já estão atualizados')
+             message.append(f'{uf} Imóveis já estão atualizados')
 
         else:
-            imoveis_cadastrados = []
-            for row in data:
-                
-                imovel_id = utils.input_cleaner(row[0], title=False)
-               
-                try:
-                
-                    imovel_inserido_obj = crud.create_imovel(
-                        db=db,
-                        imovel=row,
-                        publicado_em=f.get_formated_date()
-                    )
 
-                    imoveis_cadastrados.append(imovel_inserido_obj)
+
+            imovel_antigos_mantidos = [] 
+
+            # Percorre linha por linha do arquivo baixado 
+            for row in dados_csv:
+
+                imovel_id = utils.input_cleaner(row[0], title=False)
+                
+                try:
+                    
+                    imovel_atual = crud.get_imovel_detalhes(db=db, imovel_id=imovel_id)
+
+                    # Se o imóvel não existir, cadastra ou mantém, senão arquiva
+                    if(not imovel_atual):
+                  
+                        # Grava o imóvel no banco e returna o objeto da inserção
+                        imovel_inserido_obj = crud.create_imovel(
+                            db=db,
+                            imovel=row,
+                            publicado_em=data_csv
+                        )
+
+                        imoveis_cadastrados.append(imovel_inserido_obj)
+                    
+                    else:
+                        imovel_antigos_mantidos.append(imovel_id)
+
 
                 except Exception as e:
                     print(f'Erro ao inserir imóvel {imovel_id}: {e}')
                 finally:
                     del(imovel_id)
-            imoveis_cadastrados_por_uf.append(len(imoveis_cadastrados))
-            message.append(f'Foram cadastrados {len(imoveis_cadastrados)} imóveis de {uf}')
-    
+
+            
+            if (imovel_antigos_mantidos):
+                try:
+                    # arquiva os imóveis que não estão neste arquivo 
+                    crud.arquivamento_de_imoveis(imovel_antigos_mantidos, db=db)
+                    raise Exception (f'Erro ao arquivar imóveis de {uf}')
+                
+                except Exception as e:
+                    print(f'Erro no arquivamento: {e}')
+
+
+            date_obj = date.strftime(data_csv, '%d/%m/%Y')
+
+            contador = contador + len(imoveis_cadastrados)
+            message.append(
+                f'{uf} - {len(imoveis_cadastrados)}     Imóveis ' + 
+                f'cadastrados - Publicados em ' + 
+                f'{date_obj}')
+             
     fim = datetime.now()
+    
     return {
-        'published in': f.get_formated_date(),
         'message': message,
-        'total_novos_imoveis': '',  
+        'total_novos_imoveis': contador,  
         'inicio': inicio,
         'fim': fim,
         'tempo-processamento': (fim - inicio).total_seconds()
     }
 
-
+# Retorna detalhes de um único imóvel
 @app.get("/imovel-detalhes/{imovel_id}")
 def imovel(imovel_id: str, db: Session = Depends(get_db)):
     return crud.get_imovel_detalhes(db=db, imovel_id=imovel_id)
 
-
+# Web Scrapping
 @app.get("/imovel-complemento/{imovel_id}")
-def observacoes(imovel_id: str):
+def complemento(imovel_id: str):
     return utils.get_imovel_complemento(imovel_id)
 
-
+# Pesquisa
 @app.get("/imoveis/",)
-def read_imoveis(
+def lista_imoveis(
     imovel_id: Union[str, None] = None,
     uf: Union[str, None] = None,
     cidade: Union[str, None] = None,
